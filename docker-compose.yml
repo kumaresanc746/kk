@@ -1,45 +1,5 @@
 services:
-  # MongoDB Database
-  mongo:
-    image: mongo:7.0
-    container_name: grocery-mongo
-    restart: unless-stopped
-    ulimits:
-      nofile:
-        soft: 64000
-        hard: 64000
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_DATABASE: grocery-store
-    volumes:
-      - mongo_data:/data/db
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    networks:
-      - grocery-network
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Mongo Express (MongoDB Admin UI)
-  mongo-express:
-    image: mongo-express:latest
-    container_name: grocery-mongo-express
-    restart: unless-stopped
-    ports:
-      - "8081:8081"
-    environment:
-      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: admin123
-    depends_on:
-      - mongo
-    networks:
-      - grocery-network
-
-  # Backend API
+  # Backend API (using MongoDB Atlas cloud database)
   backend:
     build:
       context: ./backend
@@ -50,11 +10,10 @@ services:
       - "3000:3000"
     environment:
       PORT: 3000
-      MONGODB_URI: mongodb://mongo:27017/grocery-store
+      # MongoDB Atlas connection - replace with your actual credentials
+      MONGODB_URI: mongodb+srv://9102004v:9102004v@cluster0.bjm7jnm.mongodb.net/Grocerry?retryWrites=true&w=majority&appName=Cluster0
       JWT_SECRET: your-secret-key-change-in-production
       NODE_ENV: production
-    depends_on:
-      - mongo
     networks:
       - grocery-network
     volumes:
@@ -80,8 +39,3 @@ services:
 networks:
   grocery-network:
     driver: bridge
-
-volumes:
-  mongo_data:
-    driver: local
-
